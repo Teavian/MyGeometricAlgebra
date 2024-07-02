@@ -141,7 +141,31 @@ pub const Grade0 = struct {
         Grade4 => Grade4,
         else => @compileError("leftDot: incompatible types"),
     } {
-        return;
+        switch (@TypeOf(b)) {
+            Grade0 => return .{ .one = a.one * b.one },
+            Grade1 => return .{
+                .e0 = a.one * b.e0,
+                .e1 = a.one * b.e1,
+                .e2 = a.one * b.e2,
+                .e3 = a.one * b.e3,
+            },
+            Grade2 => return .{
+                .e01 = a.one * b.e01,
+                .e02 = a.one * b.e02,
+                .e03 = a.one * b.e03,
+                .e12 = a.one * b.e12,
+                .e13 = a.one * b.e13,
+                .e23 = a.one * b.e23,
+            },
+            Grade3 => return .{
+                .e012 = a.one * b.e012,
+                .e013 = a.one * b.e013,
+                .e023 = a.one * b.e023,
+                .e123 = a.one * b.e123,
+            },
+            Grade4 => return .{ .e0123 = a.one * b.e0123 },
+            else => unreachable,
+        }
     }
 };
 pub const Grade1 = struct {
@@ -232,7 +256,30 @@ pub const Grade1 = struct {
         Grade4 => Grade3,
         else => @compileError("leftDot: incompatible types"),
     } {
-        return;
+        switch (@TypeOf(b)) {
+            Grade1 => return .{ .one = a.e1 * b.e1 + a.e2 * b.e2 + a.e3 * b.e3 },
+            Grade2 => return .{
+                .e0 = -a.e1 * b.e01 - a.e2 * b.e02 - a.e3 * b.e03,
+                .e1 = -a.e2 * b.e12 - a.e3 * b.e13,
+                .e2 = a.e1 * b.e12 - a.e3 * b.e23,
+                .e3 = a.e1 * b.e13 + a.e2 * b.e23,
+            },
+            Grade3 => return .{
+                .e01 = a.e2 * b.e012 + a.e3 * b.e013,
+                .e02 = -a.e1 * b.e012 + a.e3 * b.e023,
+                .e03 = -a.e1 * b.e013 - a.e2 * b.e023,
+                .e12 = a.e3 * b.e123,
+                .e13 = -a.e2 * b.e123,
+                .e23 = a.e1 * b.e123,
+            },
+            Grade4 => return .{
+                .e012 = -a.e3 * b.e0123,
+                .e013 = a.e2 * b.e0123,
+                .e023 = -a.e1 * b.e0123,
+                .e123 = 0,
+            },
+            else => unreachable,
+        }
     }
 };
 pub const Grade2 = struct {
@@ -327,7 +374,24 @@ pub const Grade2 = struct {
         Grade4 => Grade2,
         else => @compileError("leftDot: incompatible types"),
     } {
-        return;
+        switch (@TypeOf(b)) {
+            Grade2 => return .{ .one = -a.e12 * b.e12 - a.e13 * b.e13 - a.e23 * b.e23 },
+            Grade3 => return .{
+                .e0 = -a.e12 * b.e012 - a.e13 * b.e013 - a.e23 * b.e023,
+                .e1 = -a.e23 * b.e123,
+                .e2 = a.e13 * b.e123,
+                .e3 = -a.e12 * b.e123,
+            },
+            Grade4 => return .{
+                .e01 = -a.e23 * b.e0123,
+                .e02 = a.e13 * b.e0123,
+                .e03 = -a.e12 * b.e0123,
+                .e12 = 0,
+                .e13 = 0,
+                .e23 = 0,
+            },
+            else => unreachable,
+        }
     }
 };
 pub const Grade3 = struct {
@@ -400,7 +464,16 @@ pub const Grade3 = struct {
         Grade4 => Grade1,
         else => @compileError("leftDot: incompatible types"),
     } {
-        return;
+        switch (@TypeOf(b)) {
+            Grade3 => return .{ .one = -a.e123 * b.e123 },
+            Grade4 => return .{
+                .e0 = a.e123 * b.e0123,
+                .e1 = 0,
+                .e2 = 0,
+                .e3 = 0,
+            },
+            else => unreachable,
+        }
     }
 };
 pub const Grade4 = struct {
@@ -430,6 +503,7 @@ pub const Grade4 = struct {
         return .{ .e0123 = a.e0123 * b.one };
     }
     pub fn leftDot(a: Grade4, b: Grade4) Grade0 {
-        return;
+        _ = .{ a, b };
+        return .{ .one = 0 };
     }
 };
