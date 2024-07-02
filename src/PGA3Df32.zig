@@ -78,6 +78,15 @@ pub fn leftDot(a: @This(), b: @This()) @This() {
         .grade4 = a.grade0.leftDot(b.grade4),
     };
 }
+pub fn rightDot(a: @This(), b: @This()) @This() {
+    return .{
+        .grade0 = a.grade0.rightDot(b.grade0).add(a.grade1.rightDot(b.grade1)).add(a.grade2.rightDot(b.grade2)).add(a.grade3.rightDot(b.grade3)).add(a.grade4.rightDot(b.grade4)),
+        .grade1 = a.grade1.rightDot(b.grade0).add(a.grade2.rightDot(b.grade1)).add(a.grade3.rightDot(b.grade2)).add(a.grade4.rightDot(b.grade3)),
+        .grade2 = a.grade2.rightDot(b.grade0).add(a.grade3.rightDot(b.grade1)).add(a.grade4.rightDot(b.grade2)),
+        .grade3 = a.grade3.rightDot(b.grade0).add(a.grade4.rightDot(b.grade1)),
+        .grade4 = a.grade4.rightDot(b.grade0),
+    };
+}
 pub const Grade0 = struct {
     one: f32,
     pub const zero: Grade0 = .{ .one = 0 };
@@ -166,6 +175,9 @@ pub const Grade0 = struct {
             Grade4 => return .{ .e0123 = a.one * b.e0123 },
             else => unreachable,
         }
+    }
+    pub fn rightDot(a: Grade0, b: Grade0) Grade0 {
+        return .{ .one = a.one * b.one };
     }
 };
 pub const Grade1 = struct {
@@ -281,6 +293,17 @@ pub const Grade1 = struct {
             else => unreachable,
         }
     }
+    pub fn rightDot(a: Grade1, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade1,
+        Grade1 => Grade0,
+        else => @compileError("rightDot: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade1 => return,
+            Grade2 => return,
+            else => unreachable,
+        }
+    }
 };
 pub const Grade2 = struct {
     e01: f32,
@@ -393,6 +416,19 @@ pub const Grade2 = struct {
             else => unreachable,
         }
     }
+    pub fn rightDot(a: Grade2, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade2,
+        Grade1 => Grade1,
+        Grade2 => Grade0,
+        else => @compileError("rightDot: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade0 => return,
+            Grade1 => return,
+            Grade2 => return,
+            else => unreachable,
+        }
+    }
 };
 pub const Grade3 = struct {
     e012: f32,
@@ -475,6 +511,21 @@ pub const Grade3 = struct {
             else => unreachable,
         }
     }
+    pub fn rightDot(a: Grade3, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade3,
+        Grade1 => Grade2,
+        Grade2 => Grade1,
+        Grade3 => Grade0,
+        else => @compileError("rightDot: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade0 => return,
+            Grade1 => return,
+            Grade2 => return,
+            Grade3 => return,
+            else => unreachable,
+        }
+    }
 };
 pub const Grade4 = struct {
     e0123: f32,
@@ -505,5 +556,22 @@ pub const Grade4 = struct {
     pub fn leftDot(a: Grade4, b: Grade4) Grade0 {
         _ = .{ a, b };
         return .{ .one = 0 };
+    }
+    pub fn rightDot(a: Grade4, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade4,
+        Grade1 => Grade3,
+        Grade2 => Grade2,
+        Grade3 => Grade1,
+        Grade4 => Grade0,
+        else => @compileError("rightDot: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade0 => return,
+            Grade1 => return,
+            Grade2 => return,
+            Grade3 => return,
+            Grade4 => return,
+            else => unreachable,
+        }
     }
 };
