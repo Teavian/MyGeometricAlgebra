@@ -63,7 +63,7 @@ grade4: Grade4,
 //format
 //invDual (figure out what this is)
 //leftDot: (e0,e1).leftDot(2e01,3e12,e23) == (-2e0,3e2)
-//geo
+//geo (3, 4)
 //reg (needs invDual)
 pub const zero: @This() = .{
     .grade0 = Grade0.zero,
@@ -150,6 +150,20 @@ pub fn dot(a: @This(), b: @This()) @This() {
         .grade4 = a.grade0.dot(b.grade4).add(a.grade4.dot(b.grade0)),
     };
 }
+pub fn geo(a: @This(), b: @This()) @This() {
+    const twos0, const twos2, const twos4 = a.grade2.geo(b.grade2);
+    const threes0, const threes2 = a.grade3.geo(b.grade3);
+    const twoThree1, const twoThree3 = a.grade2.geo(b.grade3);
+    const threeTwo1, const threeTwo3 = a.grade3.geo(b.grade2);
+    return .{
+        .grade0 = a.grade0.dot(b.grade0).add(a.grade1.dot(b.grade1)).add(twos0).add(threes0).add(a.grade4.dot(b.grade4)),
+        .grade1 = a.grade0.dot(b.grade1).add(a.grade1.dot(b.grade0)).add(a.grade1.dot(b.grade2)).add(a.grade2.dot(b.grade1)).add(twoThree1).add(threeTwo1).add(a.grade3.dot(b.grade4)).add(a.grade4.dot(b.grade3)),
+        .grade2 = a.grade0.dot(b.grade2).add(a.grade1.span(b.grade1)).add(a.grade1.dot(b.grade3)).add(a.grade2.dot(b.grade0)).add(twos2).add(a.grade2.dot(b.grade4)).add(a.grade3.dot(b.grade1)).add(threes2).add(a.grade4.dot(b.grade2)),
+        .grade3 = a.grade0.dot(b.grade3).add(a.grade1.span(b.grade2)).add(a.grade1.dot(b.grade4)).add(a.grade2.span(b.grade1)).add(twoThree3).add(a.grade3.dot(b.grade0)).add(threeTwo3).add(a.grade4.dot(b.grade1)),
+        .grade4 = a.grade0.span(b.grade4).add(a.grade1.span(b.grade3)).add(twos4).add(a.grade3.span(b.grade1)).add(a.grade4.span(b.grade0)),
+    };
+}
+
 pub const Grade0 = struct {
     one: f32,
     pub const zero: Grade0 = .{ .one = 0 };
@@ -249,6 +263,16 @@ pub const Grade0 = struct {
         Grade3 => Grade3,
         Grade4 => Grade4,
         else => @compileError("dot: incompatible types"),
+    } {
+        return a.leftDot(b);
+    }
+    pub fn geo(a: Grade0, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade0,
+        Grade1 => Grade1,
+        Grade2 => Grade2,
+        Grade3 => Grade3,
+        Grade4 => Grade4,
+        else => @compileError("geo: incompatible types"),
     } {
         return a.leftDot(b);
     }
@@ -393,6 +417,24 @@ pub const Grade1 = struct {
         switch (@TypeOf(b)) {
             Grade0 => return a.rightDot(b),
             Grade1, Grade2, Grade3, Grade4 => return a.leftDot(b),
+            else => unreachable,
+        }
+    }
+    pub fn geo(a: Grade1, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade1,
+        Grade1 => struct { Grade0, Grade2 },
+        Grade2 => struct { Grade1, Grade3 },
+        Grade3 => struct { Grade2, Grade4 },
+        Grade4 => Grade3,
+        else => @compileError("geo: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade0 => return a.span(b),
+            Grade1, Grade2, Grade3 => return .{
+                a.leftDot(b),
+                a.span(b),
+            },
+            Grade4 => return a.leftDot(b),
             else => unreachable,
         }
     }
@@ -544,6 +586,45 @@ pub const Grade2 = struct {
         switch (@TypeOf(b)) {
             Grade0, Grade1 => return a.rightDot(b),
             Grade2, Grade3, Grade4 => return a.leftDot(b),
+            else => unreachable,
+        }
+    }
+    pub fn geo(a: Grade2, b: anytype) switch (@TypeOf(b)) {
+        Grade0 => Grade2,
+        Grade1 => struct { Grade1, Grade3 },
+        Grade2 => struct { Grade0, Grade2, Grade4 },
+        Grade3 => struct { Grade1, Grade3 },
+        Grade4 => Grade2,
+        else => @compileError("geo: incompatible types"),
+    } {
+        switch (@TypeOf(b)) {
+            Grade0 => return a.span(b),
+            Grade1 => return .{
+                a.leftDot(b),
+                a.span(b),
+            },
+            Grade2 => return .{
+                a.leftDot(b),
+                .{
+                    .e01 = -a.e02 * b.e12 - a.e03 * b.e13 + a.e12 * b.e02 + a.e13 * b.e03,
+                    .e02 = a.e01 * b.e12 - a.e03 * b.e23 - a.e12 * b.e01 + a.e23 * b.e03,
+                    .e03 = a.e01 * b.e13 + a.e02 * b.e23 - a.e13 * b.e01 - a.e23 * b.e02,
+                    .e12 = -a.e13 * b.e23 + a.e23 * b.e13,
+                    .e13 = a.e12 * b.e23 - a.e23 * b.e12,
+                    .e23 = a.e12 * b.e13 + a.e13 * b.e12,
+                },
+                a.span(b),
+            },
+            Grade3 => return .{
+                a.leftDot(b),
+                .{
+                    .e012 = a.e03 * b.e123 - a.e13 * b.e023 + a.e23 * b.e013,
+                    .e013 = -a.e02 * b.e123 + a.e12 * b.e023 - a.e23 * b.e012,
+                    .e023 = a.e01 * b.e123 - a.e12 * b.e013 + a.e13 * b.e012,
+                    .e123 = 0,
+                },
+            },
+            Grade4 => return a.leftDot(b),
             else => unreachable,
         }
     }
