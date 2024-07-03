@@ -1,3 +1,59 @@
+// 3D Projective Geometric Algebra
+//   This uses four basis vectors (e0, e1, e2, and e3) that can be added and
+// multiplied together.
+// Addition works exactly as you'd expect it to.
+//   The principal multiplication is done with the geometric product (geo), which
+// follows the distributive rule, and works as follows on the basis vectors:
+//   e0*e0 = 0
+//   e1*e1 = e2*e2 = e3*e3 = 1
+//   en*em = -em*en = enm, for indices n and m that follow n<m
+//
+//   Vectors can be classified by how many indicies their components have,
+// called grades. These grades can be interpreted geometrically as objects in
+// 3D projective space:
+//   Grade 0 vectors are also called scalars, and act to embiggen or contract other
+//     objects.
+//   Grade 1 vectors represent planes with the following correspondance:
+//     G1(a, b, c, d) represents a + bx + cy + dz = 0
+//     The e1, e2, and e3 components represent a vector perpendicular to the plane.
+//     The e0 component represents the plane at infinity, and serves to translate
+//     planes relative to the origin.
+//   Grade 2 vectors represent lines, using Plucker coordinates, which I don't
+//     understand.
+//   Grade 3 vectors represent points with the following correspondance:
+//     G3(a, b, c, -d) represents (c/d, b/d, a/d)
+//     When the e123 component is zero, a grade 3 vector represents a direction.
+//   Grade 4 vectors are also called pseudoscalars, and seem to mainly be used to
+//     find dual vectors.
+// .
+// rev: The reverse is a linear operation that reverses basis vectors:
+//   rev(e012) = e210 = -e012
+// dual: Also known as the Hodge star, this is a linear operation that satisfies
+//   the following equation for basis vectors:
+//   A.geo(dual(A)) = e0123
+//   There is also an inverse dual (invDual), which I am a little confused as to how
+//   it works (see the regressive product).
+// magSq: The magnitude squared of a vector, defined as rev(A).geo(A).grade0
+// span: Also known as the outer product, wedge product, or the meet, this is
+//   the highest grade part of the geometric product. If the two vectors have
+//   grades N and M, the span has grade N+M. It is the same no matter
+//   the flavor of geometric algebra, as there is no cancellation of basis vectors.
+//   In projective geometric algebra, the span represents the intersection of
+//   two objects.
+// reg: The regressive product, or the join. This represents the object that connects
+//   two non-overlapping object. e.g.: the line connecting two points, the plane
+//   connecting a point and a line. If the two vectors have grades N and M,
+//   the regressive product has grade N+M-4.
+//   It is defined as invDual(dual(A).span(dual(B)))
+// leftDot, rightDot: Also known as the left and right contractions, these are
+//   the lowest grade part of the geometric product. If the two vectors have
+//   grades N and M, leftDot has grade M-N, and rightDot has grade N-M.
+// dot: Also known as the inner product, this combines leftDot and rightDot by using
+//   whichever is defined to not be automatically zero. If the two vectors have
+//   grades N and M, dot has grade @abs(N-M). This operation is used in projecting
+//   objects onto each other.
+// geo: the geometric product, as described above.
+
 grade0: Grade0,
 grade1: Grade1,
 grade2: Grade2,
@@ -7,7 +63,6 @@ grade4: Grade4,
 //format
 //invDual (figure out what this is)
 //leftDot: (e0,e1).leftDot(2e01,3e12,e23) == (-2e0,3e2)
-//dot
 //geo
 //reg (needs invDual)
 pub const zero: @This() = .{
